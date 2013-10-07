@@ -47,7 +47,13 @@ class TicTacToe < Processing::App
   end
 
   def winner?
-    vertical_winner || horizontal_winner || diagonal_winner
+    vertical_winner || horizontal_winner || diagonal_winner || tie
+  end
+
+  def tie
+    if !status.has_value?(:open)
+      @winner = :tie
+    end
   end
 
   def vertical_winner
@@ -145,8 +151,10 @@ class TicTacToe < Processing::App
     text("WINNER IS... #{@winner.to_s}", 400, 750)
     if @winner == :x
       winner_x
-    else
+    elsif @winner == :o
       winner_o
+    else
+      winner_tie
     end
   end
 
@@ -166,6 +174,13 @@ class TicTacToe < Processing::App
     stroke(25,250,25)
     line(x-l, y-l, x+l, y+l)
     line(x-l, y+l, x+l, y-l)
+  end
+
+  def winner_tie
+    textSize(100)
+    fill(255, 0, 0)
+    textAlign(CENTER)
+    text("TIE!!!", 400, 400)
   end
 
   def draw_past_moves
