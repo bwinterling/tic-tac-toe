@@ -1,33 +1,17 @@
 require 'ruby-processing'
+require './lib/board'
 
 class TicTacToe < Processing::App
 
-  attr_accessor :cursor_location, :current_player, :status
+  attr_reader :board, :offset, :cursor
+  attr_accessor :current_player
 
   def setup
-    @cursor_location = default_cursor
-    @status = default_status
+    # coordinates
     @current_player = :x
-    coordinates
+    @board = Board.new
+    @offset = 200
     smooth
-  end
-
-  def default_status
-    {
-      [200,200] => :open,
-      [400,200] => :open,
-      [600,200] => :open,
-      [200,400] => :open,
-      [400,400] => :open,
-      [600,400] => :open,
-      [200,600] => :open,
-      [400,600] => :open,
-      [600,600] => :open,
-    }
-  end
-
-  def default_cursor
-    [200,200]
   end
 
   def draw
@@ -38,120 +22,22 @@ class TicTacToe < Processing::App
   end
 
   def evaluate_board
-    unless winner?
+    unless board.winner?
       draw_past_moves
-      draw_next_move(@cursor_location)
+      draw_next_move(board.cursor_location)
     else
       draw_winner
     end
   end
 
-  def winner?
-    vertical_winner || horizontal_winner || diagonal_winner || tie
-  end
-
-  def tie
-    if !status.has_value?(:open)
-      @winner = :tie
-    end
-  end
-
-  def vertical_winner
-
-    @winner = nil
-
-    if status[[200,200]] == :x && status[[200,400]] == :x && status[[200,600]] == :x
-      @winner = :x
-    end
-
-    if status[[400,200]] == :x && status[[400,400]] == :x && status[[400,600]] == :x
-      @winner = :x
-    end
-
-    if status[[600,200]] == :x && status[[600,400]] == :x && status[[600,600]] == :x
-      @winner = :x
-    end
-
-    if status[[200,200]] == :o && status[[200,400]] == :o && status[[200,600]] == :o
-      @winner = :o
-    end
-
-    if status[[400,200]] == :o && status[[400,400]] == :o && status[[400,600]] == :o
-      @winner = :o
-    end
-
-    if status[[600,200]] == :o && status[[600,400]] == :o && status[[600,600]] == :o
-      @winner = :o
-    end
-
-    @winner
-  end
-
-  def horizontal_winner
-
-    @winner = nil
-
-    if status[[200,200]] == :x && status[[400,200]] == :x && status[[600,200]] == :x
-      @winner = :x
-    end
-
-    if status[[200,400]] == :x && status[[400,400]] == :x && status[[600,400]] == :x
-      @winner = :x
-    end
-
-    if status[[200,600]] == :x && status[[400,600]] == :x && status[[600,600]] == :x
-      @winner = :x
-    end
-
-    if status[[200,200]] == :o && status[[400,200]] == :o && status[[600,200]] == :o
-      @winner = :o
-    end
-
-    if status[[200,400]] == :o && status[[400,400]] == :o && status[[600,400]] == :o
-      @winner = :o
-    end
-
-    if status[[200,600]] == :o && status[[400,600]] == :o && status[[600,600]] == :o
-      @winner = :o
-    end
-
-    @winner
-  end
-
-  def diagonal_winner
-
-    @winner = nil
-
-    if status[[200,200]] == :x && status[[400,400]] == :x && status[[600,600]] == :x
-      @winner = :x
-    end
-
-    if status[[200,600]] == :x && status[[400,400]] == :x && status[[600,200]] == :x
-      @winner = :x
-    end
-
-    if status[[200,200]] == :o && status[[400,400]] == :o && status[[600,600]] == :o
-      @winner = :o
-    end
-
-    if status[[200,600]] == :o && status[[400,400]] == :o && status[[600,200]] == :o
-      @winner = :o
-    end
-
-
-    @winner
-
-  end
-
-
   def draw_winner
     textSize(32)
     fill(20, 250, 25)
     textAlign(CENTER)
-    text("WINNER IS... #{@winner.to_s}", 400, 750)
-    if @winner == :x
+    text("WINNER IS... #{board.winner.to_s}", 400, 750)
+    if board.winner == :x
       winner_x
-    elsif @winner == :o
+    elsif board.winner == :o
       winner_o
     else
       winner_tie
@@ -184,7 +70,7 @@ class TicTacToe < Processing::App
   end
 
   def draw_past_moves
-    status.each do |coordinates, availability|
+    board.status.each do |coordinates, availability|
       if availability == :x
         draw_x(*coordinates)
       elsif availability == :o
@@ -195,48 +81,36 @@ class TicTacToe < Processing::App
 
   def key_pressed
     if key == CODED
-      new_location = cursor_location.dup
+      new_location = board.cursor_location.dup
       case key_code
         when UP
-          new_location[1] -= 200
+          new_location[1] -= 1
         when DOWN
-          new_location[1] += 200
+          new_location[1] += 1
         when LEFT
-          new_location[0] -= 200
+          new_location[0] -= 1
         when RIGHT
-          new_location[0] += 200
+          new_location[0] += 1
       end
       eval_next_move(new_location)
-    elsif key == "\n" && ! @winner
+    elsif key == "\n" && ! board.winner
       process_move
-    elsif key == "\n" && @winner
-      @winner == nil
-      @status = default_status
-      @cursor_location = default_cursor
+    elsif key == "\n" && board.winner
+      board.winner = nil
+      board.status = board.default_status
+      board.cursor_location = board.default_cursor
     end
 
   end
 
   def process_move
     unless @invalid_placement
-      status[cursor_location] = current_player
+      board.update_status(board.cursor_location, current_player)
       toggle_player
     else
-      draw_error(cursor_location, "you cant move there")
+      draw_error(board.cursor_location, "you cant move there")
     end
     # reset cursor
-  end
-
-  def coordinates
-    @a1 = status[[200,200]]
-    @a2 = status[[400,200]]
-    @a3 = status[[600,200]]
-    @b1 = status[[200,400]]
-    @b2 = status[[400,400]]
-    @b3 = status[[600,400]]
-    @c1 = status[[200,600]]
-    @c2 = status[[400,600]]
-    @c3 = status[[600,600]]
   end
 
   def toggle_player
@@ -248,15 +122,15 @@ class TicTacToe < Processing::App
   end
 
   def eval_next_move(desired_location)
-    if status[desired_location] == :open
+    if board.status[desired_location] == :open
       @invalid_placement = false
-      @cursor_location = desired_location
-    elsif status[desired_location] == :x ||
-          status[desired_location] == :o
-      @cursor_location = desired_location
+      board.cursor_location = desired_location
+    elsif board.status[desired_location] == :x ||
+          board.status[desired_location] == :o
+      board.cursor_location = desired_location
       @invalid_placement = true
     else
-      draw_error(@cursor_location, "You can't move there!")
+      draw_error(board.cursor_location, "You can't move there!")
       textSize(32)
       fill(100, 102, 153, 51)
       text("YOU CAN't MOVE THERE!", 10, 30)
@@ -284,23 +158,36 @@ class TicTacToe < Processing::App
     x = cursor_location[0]
     y = cursor_location[1]
     unless @invalid_placement
-      fill(215,215,215)
+      draw_rect(*cursor_location)
     else
-      textSize(25)
-      fill(255,0,0)
-      text("INVALID", x-45, y-75)
+      draw_invalid_rect(*cursor_location)
     end
-    rect(x-70,y-70,140,140)
     if current_player == :x
-      draw_x(x, y)
+      draw_x(*cursor_location)
     else
-      draw_o(x, y)
+      draw_o(*cursor_location)
     end
   end
 
+  def draw_invalid_rect(x, y)
+    x *= offset
+    y *= offset
+    textSize(25)
+    fill(255,0,0)
+    text("INVALID", x, y-75)
+    rect(x-70,y-70,140,140)
+  end
+
+  def draw_rect(x, y)
+    fill(215,215,215)
+    x *= offset
+    y *= offset
+    rect(x-70,y-70,140,140)
+  end
+
   def draw_error(cursor_location, error)
-    x = cursor_location[0]
-    y = cursor_location[1]
+    x = cursor_location[0] * offset
+    y = cursor_location[1] * offset
     fill(247,5,5)
     rect(x-70,y-70,140,140)
 
@@ -312,11 +199,13 @@ class TicTacToe < Processing::App
   def draw_o(x,y)
     d = 115
     fill(255,255,255)
-    ellipse(x,y,d,d)
+    ellipse(x * offset,y * offset,d,d)
   end
 
   def draw_x(x,y)
     l = 50
+    x *= offset
+    y *= offset
     line(x-l, y-l, x+l, y+l)
     line(x-l, y+l, x+l, y-l)
   end
@@ -324,4 +213,3 @@ class TicTacToe < Processing::App
 end
 
 TicTacToe.new(:width => 800, :height => 800, :title => "Tic Tac Toe!")
-
