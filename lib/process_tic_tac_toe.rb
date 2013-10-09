@@ -4,8 +4,8 @@ require './lib/board_view'
 
 class TicTacToe < Processing::App
 
-  attr_reader :board, :board_view, :cursor_location
-  attr_accessor :current_player
+  attr_reader :board, :board_view
+  attr_accessor :current_player, :cursor_location
 
   def setup
     # coordinates
@@ -37,7 +37,7 @@ class TicTacToe < Processing::App
 
   def key_pressed
     if key == CODED
-      new_location = cursor_location
+      new_location = cursor_location.dup
       case key_code
         when UP
           new_location[1] -= 1
@@ -54,7 +54,7 @@ class TicTacToe < Processing::App
     elsif key == "\n" && board.winner
       board.winner = nil
       board.status = board.default_status
-      cursor_location = default_cursor
+      self.cursor_location = default_cursor
     end
   end
 
@@ -63,35 +63,20 @@ class TicTacToe < Processing::App
   end
 
   def mouse_grid
-    # mouse_grid = board.status.keys.each_with_object({}) do |key, grid|
-    #   max_mins = Hash.new
-    #   max_mins[:xmax] = key[0] * board_view.offset + board_view.border
-    #   max_mins[:xmin] = key[0] * board_view.border
-    #   max_mins[:ymax] = key[1] * board_view.offset + board_view.border
-    #   max_mins[:ymin] = key[1] * board_view.border
-    #   grid[key] = max_mins
-    # end
-    # pp mouse_grid
-  end 
+    @mouse_grid ||= build_mouse_grid
+  end
 
-  # def mouse_grid
-  #   {
-  #     [1,1] => {
-  #       "xmax" => 1 * board_view.offset + board_view.border,
-  #       "xmin" => 1 * board_view.border,
-  #       "ymax" => 1 * board_view.offset + board_view.border,
-  #       "ymin" => 1 * board_view.border
-  #     },
-  #     [2,1] => :open,
-  #     [3,1] => :open,
-  #     [1,2] => :open,
-  #     [2,2] => :open,
-  #     [3,2] => :open,
-  #     [1,3] => :open,
-  #     [2,3] => :open,
-  #     [3,3] => :open,
-  #   }
-  # end
+  def build_mouse_grid
+    mouse_grid = {}
+    board.status.keys.each do |key|
+      mouse_grid[key] = {
+        "xmax" => (key[0] * board_view.offset) + board_view.border,
+        "xmin" => ((key[0] - 1) * board_view.offset) + board_view.border,
+        "ymax" => (key[1] * board_view.offset) + board_view.border,
+        "ymin" => ((key[1] - 1) * board_view.offset) + board_view.border
+      }
+    end
+  end 
 
   def process_move
     unless board.invalid_placement
@@ -114,10 +99,10 @@ class TicTacToe < Processing::App
   def eval_next_move(desired_location)
     if board.status[desired_location] == :open
       board.invalid_placement = false
-      cursor_location = desired_location
+      self.cursor_location = desired_location.dup
     elsif board.status[desired_location] == :x ||
           board.status[desired_location] == :o
-      cursor_location = desired_location
+      self.cursor_location = desired_location.dup
       board.invalid_placement = true
     else
       board_view.draw_error(cursor_location, "You can't move there!")
