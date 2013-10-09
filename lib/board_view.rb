@@ -8,6 +8,18 @@ class BoardView
     @width = app.width
   end
 
+  def smoke_images
+    @smoke_images ||= get_smoke_images
+  end
+
+  def get_smoke_images
+    images = []
+    14.times do |i|
+      images << app.load_image("./lib/resources/images/smoke/smoke#{i}.png")
+    end
+    images
+  end
+
   def offset
     width / 4
   end
@@ -18,7 +30,6 @@ class BoardView
 
   def render
     generate_board
-    instructions
   end
 
   def draw_background
@@ -52,6 +63,20 @@ class BoardView
     app.image(img, 90, 185)
   end
 
+  def draw_smoke(x, y)
+    x *= offset
+    y *= offset
+    #smoke_images.each do |img|
+    #  app.image(img, x - 70, y - 70)
+    #end
+    if :smoke == true
+      14.times do |i|
+        img = app.load_image("./resources/images/smoke/smoke#{i}.png", 'png')
+        app.image(img, x - 70, y - 70)
+      end
+    end
+  end
+
   def draw_past_moves
     board.status.each do |coordinates, availability|
       if availability == :x
@@ -60,14 +85,6 @@ class BoardView
         draw_o(*coordinates)
       end
     end
-  end
-
-  def instructions
-    app.textSize(32)
-    app.fill(0, 102, 153, 51)
-    # fill(20, 250, 25)
-    app.center_text
-    app.text("use arrows to place move, enter to confirm", 400, 50)
   end
 
   def generate_board

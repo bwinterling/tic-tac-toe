@@ -30,10 +30,6 @@ class BoardTest < Minitest::Test
     assert_equal sample, board.default_status
   end
 
-  def test_default_cursor_location
-    assert_equal [1,1], board.default_cursor
-  end
-
   def test_winner_default_is_false
     refute board.winner?
   end
@@ -45,10 +41,8 @@ class BoardTest < Minitest::Test
 
   def test_it_can_reset
     board.update_status([1,1], :x)
-    board.cursor_location = [2,1]
     board.winner = :x
     board.reset
-    assert_equal [1,1], board.cursor_location
     assert_equal board.default_status, board.status
     assert_equal nil, board.winner
   end

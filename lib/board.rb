@@ -1,10 +1,12 @@
 class Board
 
-  attr_accessor :status, :winner, :cursor_location, :invalid_placement
+  attr_accessor :status, :winner, :cursor_location, :invalid_placement,
+                :most_recent_move
 
   def initialize
     @status          = default_status
     @invalid_placement = false
+    @most_recent_move = nil
   end
 
   def default_status
@@ -25,6 +27,7 @@ class Board
     @status            = default_status
     @winner            = nil
     @invalid_placement = false
+    @most_recent_move = nil
   end
 
   def update_status(location, player)
