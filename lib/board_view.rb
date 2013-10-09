@@ -23,7 +23,7 @@ class BoardView
 
   def draw_background
     app.background(255,255,255)
-    bg = app.load_image('./resources/images/bg-tic-tag-toe.png', 'png')
+    bg = app.load_image('./resources/images/bg-tic-tag-toe.jpg', 'jpg')
     app.image(bg, 0, 0)
   end
 
