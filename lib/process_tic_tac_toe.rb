@@ -4,8 +4,8 @@ require './lib/board_view'
 
 class TicTacToe < Processing::App
 
-  attr_reader :board, :board_view, :cursor_location
-  attr_accessor :current_player
+  attr_reader :board, :board_view
+  attr_accessor :current_player, :cursor_location
 
   def setup
     # coordinates
@@ -37,7 +37,7 @@ class TicTacToe < Processing::App
 
   def key_pressed
     if key == CODED
-      new_location = cursor_location
+      new_location = cursor_location.dup
       case key_code
         when UP
           new_location[1] -= 1
@@ -54,7 +54,7 @@ class TicTacToe < Processing::App
     elsif key == "\n" && board.winner
       board.winner = nil
       board.status = board.default_status
-      cursor_location = default_cursor
+      self.cursor_location = default_cursor
     end
   end
 
@@ -114,10 +114,10 @@ class TicTacToe < Processing::App
   def eval_next_move(desired_location)
     if board.status[desired_location] == :open
       board.invalid_placement = false
-      cursor_location = desired_location
+      self.cursor_location = desired_location
     elsif board.status[desired_location] == :x ||
           board.status[desired_location] == :o
-      cursor_location = desired_location
+      self.cursor_location = desired_location
       board.invalid_placement = true
     else
       board_view.draw_error(cursor_location, "You can't move there!")

@@ -22,8 +22,9 @@ class Board
   end
 
   def reset
-    @status          = default_status
-    @winner          = nil
+    @status            = default_status
+    @winner            = nil
+    @invalid_placement = false
   end
 
   def update_status(location, player)
