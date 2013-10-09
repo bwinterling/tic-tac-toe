@@ -38,6 +38,7 @@ class TicTacToe < Processing::App
   def key_pressed
     if key == CODED
       unless board.winner
+        new_location = cursor_location.dup
         case key_code
           when UP
             new_location[1] -= 1
