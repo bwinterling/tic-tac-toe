@@ -43,8 +43,89 @@ class BoardTest < Minitest::Test
     assert_equal :x, board.status[[1,1]]
   end
 
+  def test_it_can_reset
+    board.update_status([1,1], :x)
+    board.cursor_location = [2,1]
+    board.winner = :x
+    board.reset
+    assert_equal [1,1], board.cursor_location
+    assert_equal board.default_status, board.status
+    assert_equal nil, board.winner
+  end
+
   def test_vertical_winner
-   
+    board.update_status([1,1], :x)
+    board.update_status([1,2], :x)
+    board.update_status([1,3], :x)
+    assert board.winner?
+    assert_equal :x, board.winner
+
+    board.reset
+    board.update_status([2,1], :o)
+    board.update_status([2,2], :o)
+    board.update_status([2,3], :o)
+    assert board.winner?
+    assert_equal :o, board.winner
+
+    board.reset
+    board.update_status([2,1], :o)
+    board.update_status([2,2], :o)
+    board.update_status([2,3], :o)
+    assert board.winner?
+    assert_equal :o, board.winner
+  end
+
+  def test_horizontal_winner
+    board.update_status([1,1], :x)
+    board.update_status([2,1], :x)
+    board.update_status([3,1], :x)
+    assert board.winner?
+    assert_equal :x, board.winner
+
+    board.reset
+    board.update_status([1,2], :o)
+    board.update_status([2,2], :o)
+    board.update_status([3,2], :o)
+    assert board.winner?
+    assert_equal :o, board.winner
+
+    board.reset
+    board.update_status([1,3], :o)
+    board.update_status([2,3], :o)
+    board.update_status([3,3], :o)
+    assert board.winner?
+    assert_equal :o, board.winner
+  end
+
+  def test_diagonal_winner
+    board.update_status([1,1], :x)
+    board.update_status([2,2], :x)
+    board.update_status([3,3], :x)
+    assert board.winner?
+    assert_equal :x, board.winner
+
+    board.reset
+    board.update_status([1,3], :o)
+    board.update_status([2,2], :o)
+    board.update_status([3,1], :o)
+    assert board.winner?
+    assert_equal :o, board.winner
+  end
+
+  def test_tie
+    board.status = {
+      [1,1] => :x,
+      [2,1] => :o,
+      [3,1] => :x,
+      [1,2] => :x,
+      [2,2] => :o,
+      [3,2] => :x,
+      [1,3] => :o,
+      [2,3] => :x,
+      [3,3] => :o,
+    }
+    board.tie
+    assert_equal :tie, board.winner
   end
 
 end

@@ -1,87 +1,43 @@
 require 'ruby-processing'
 require './lib/board'
+require './lib/board_view'
 
 class TicTacToe < Processing::App
 
-  attr_reader :board, :offset, :cursor
+  attr_reader :board, :board_view, :cursor_location
   attr_accessor :current_player
 
   def setup
     # coordinates
     @current_player = :x
     @board = Board.new
-    @offset = 200
+    @board_view = BoardView.new(self, @board)
+    @cursor_location = default_cursor
     smooth
+    mouse_grid
   end
 
   def draw
-    background(255,255,255)
-    generate_board
-    instructions
+    board_view.render
     evaluate_board
+  end
+
+  def default_cursor
+    [1,1]
   end
 
   def evaluate_board
     unless board.winner?
-      draw_past_moves
-      draw_next_move(board.cursor_location)
+      board_view.draw_past_moves
+      board_view.draw_cursor(cursor_location)
     else
-      draw_winner
-    end
-  end
-
-  def draw_winner
-    textSize(32)
-    fill(20, 250, 25)
-    textAlign(CENTER)
-    text("WINNER IS... #{board.winner.to_s}", 400, 750)
-    if board.winner == :x
-      winner_x
-    elsif board.winner == :o
-      winner_o
-    else
-      winner_tie
-    end
-  end
-
-  def winner_o
-    d = 400
-    stroke(25,250,25)
-    strokeWeight(20)
-    fill(255,255,255)
-    ellipse(400,400,d,d)
-  end
-
-  def winner_x
-    l = 250
-    x = 400
-    y = 400
-    strokeWeight(20)
-    stroke(25,250,25)
-    line(x-l, y-l, x+l, y+l)
-    line(x-l, y+l, x+l, y-l)
-  end
-
-  def winner_tie
-    textSize(100)
-    fill(255, 0, 0)
-    textAlign(CENTER)
-    text("TIE!!!", 400, 400)
-  end
-
-  def draw_past_moves
-    board.status.each do |coordinates, availability|
-      if availability == :x
-        draw_x(*coordinates)
-      elsif availability == :o
-        draw_o(*coordinates)
-      end
+      board_view.draw_winner
     end
   end
 
   def key_pressed
     if key == CODED
-      new_location = board.cursor_location.dup
+      new_location = cursor_location
       case key_code
         when UP
           new_location[1] -= 1
@@ -98,17 +54,51 @@ class TicTacToe < Processing::App
     elsif key == "\n" && board.winner
       board.winner = nil
       board.status = board.default_status
-      board.cursor_location = board.default_cursor
+      cursor_location = default_cursor
     end
+  end
+
+  def mouse_moved
 
   end
 
+  def mouse_grid
+    # mouse_grid = board.status.keys.each_with_object({}) do |key, grid|
+    #   max_mins = Hash.new
+    #   max_mins[:xmax] = key[0] * board_view.offset + board_view.border
+    #   max_mins[:xmin] = key[0] * board_view.border
+    #   max_mins[:ymax] = key[1] * board_view.offset + board_view.border
+    #   max_mins[:ymin] = key[1] * board_view.border
+    #   grid[key] = max_mins
+    # end
+    # pp mouse_grid
+  end 
+
+  # def mouse_grid
+  #   {
+  #     [1,1] => {
+  #       "xmax" => 1 * board_view.offset + board_view.border,
+  #       "xmin" => 1 * board_view.border,
+  #       "ymax" => 1 * board_view.offset + board_view.border,
+  #       "ymin" => 1 * board_view.border
+  #     },
+  #     [2,1] => :open,
+  #     [3,1] => :open,
+  #     [1,2] => :open,
+  #     [2,2] => :open,
+  #     [3,2] => :open,
+  #     [1,3] => :open,
+  #     [2,3] => :open,
+  #     [3,3] => :open,
+  #   }
+  # end
+
   def process_move
-    unless @invalid_placement
-      board.update_status(board.cursor_location, current_player)
+    unless board.invalid_placement
+      board.update_status(cursor_location, current_player)
       toggle_player
     else
-      draw_error(board.cursor_location, "you cant move there")
+      board_view.draw_error(cursor_location, "you cant move there")
     end
     # reset cursor
   end
@@ -123,91 +113,19 @@ class TicTacToe < Processing::App
 
   def eval_next_move(desired_location)
     if board.status[desired_location] == :open
-      @invalid_placement = false
-      board.cursor_location = desired_location
+      board.invalid_placement = false
+      cursor_location = desired_location
     elsif board.status[desired_location] == :x ||
           board.status[desired_location] == :o
-      board.cursor_location = desired_location
-      @invalid_placement = true
+      cursor_location = desired_location
+      board.invalid_placement = true
     else
-      draw_error(board.cursor_location, "You can't move there!")
-      textSize(32)
-      fill(100, 102, 153, 51)
-      text("YOU CAN't MOVE THERE!", 10, 30)
+      board_view.draw_error(cursor_location, "You can't move there!")
     end
   end
 
-  def instructions
-    textSize(32)
-    fill(0, 102, 153, 51)
-    # fill(20, 250, 25)
+  def center_text
     textAlign(CENTER)
-    text("use arrows to place move, enter to confirm", 400, 50)
-  end
-
-  def generate_board
-    strokeWeight(5)
-    stroke(0,0,0)
-    line(100, 300, 700, 300)
-    line(100, 500, 700, 500)
-    line(300, 100, 300, 700)
-    line(500, 100, 500, 700)
-  end
-
-  def draw_next_move(cursor_location)
-    x = cursor_location[0]
-    y = cursor_location[1]
-    unless @invalid_placement
-      draw_rect(*cursor_location)
-    else
-      draw_invalid_rect(*cursor_location)
-    end
-    if current_player == :x
-      draw_x(*cursor_location)
-    else
-      draw_o(*cursor_location)
-    end
-  end
-
-  def draw_invalid_rect(x, y)
-    x *= offset
-    y *= offset
-    textSize(25)
-    fill(255,0,0)
-    text("INVALID", x, y-75)
-    rect(x-70,y-70,140,140)
-  end
-
-  def draw_rect(x, y)
-    fill(215,215,215)
-    x *= offset
-    y *= offset
-    rect(x-70,y-70,140,140)
-  end
-
-  def draw_error(cursor_location, error)
-    x = cursor_location[0] * offset
-    y = cursor_location[1] * offset
-    fill(247,5,5)
-    rect(x-70,y-70,140,140)
-
-    #textSize(32)
-    #fill(0, 102, 153, 51)
-    #text(error)
-  end
-
-  def draw_o(x,y)
-    d = 115
-    fill(255,255,255)
-    ellipse(x * offset,y * offset,d,d)
-  end
-
-  def draw_x(x,y)
-    l = 50
-    x *= offset
-    y *= offset
-    line(x-l, y-l, x+l, y+l)
-    line(x-l, y+l, x+l, y-l)
   end
 
 end
