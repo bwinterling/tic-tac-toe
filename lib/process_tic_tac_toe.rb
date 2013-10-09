@@ -82,11 +82,18 @@ class TicTacToe < Processing::App
     unless board.invalid_placement
       board.update_status(cursor_location, current_player)
       toggle_player
+      self.cursor_location = next_move
     else
       board_view.draw_error(cursor_location, "you cant move there")
     end
     # reset cursor
   end
+
+  def next_move
+    next_move = board.status.keys.find_all { |location| board.status[location] == :open }
+    next_move[rand(next_move.count)]
+  end
+
 
   def toggle_player
     if current_player == :x
@@ -115,4 +122,4 @@ class TicTacToe < Processing::App
 
 end
 
-TicTacToe.new(:width => 800, :height => 800, :title => "Tic Tac Toe!")
+TicTacToe.new(:width => 801, :height => 800, :title => "Tic Tac Toe!")
