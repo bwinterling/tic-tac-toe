@@ -8,13 +8,11 @@ class TicTacToe < Processing::App
   attr_accessor :current_player, :cursor_location
 
   def setup
-    # coordinates
     @current_player = :x
     @board = Board.new
     @board_view = BoardView.new(self, @board)
     @cursor_location = default_cursor
     smooth
-    mouse_grid
   end
 
   def draw
@@ -29,6 +27,7 @@ class TicTacToe < Processing::App
 
   def evaluate_board
     unless board.winner?
+      #board_view.draw_smoke(*board.most_recent_move) if board.most_recent_move
       board_view.draw_past_moves
       board_view.draw_cursor(cursor_location)
     else
@@ -38,18 +37,19 @@ class TicTacToe < Processing::App
 
   def key_pressed
     if key == CODED
-      new_location = cursor_location.dup
-      case key_code
-        when UP
-          new_location[1] -= 1
-        when DOWN
-          new_location[1] += 1
-        when LEFT
-          new_location[0] -= 1
-        when RIGHT
-          new_location[0] += 1
+      unless board.winner
+        case key_code
+          when UP
+            new_location[1] -= 1
+          when DOWN
+            new_location[1] += 1
+          when LEFT
+            new_location[0] -= 1
+          when RIGHT
+            new_location[0] += 1
+        end
+        eval_next_move(new_location)
       end
-      eval_next_move(new_location)
     elsif key == "\n" && ! board.winner
       process_move
     elsif key == "\n" && board.winner
@@ -93,17 +93,25 @@ class TicTacToe < Processing::App
       }
     end
     mouse_grid
-  end 
+  end
 
   def process_move
     unless board.invalid_placement
       board.update_status(cursor_location, current_player)
+      board.most_recent_move = cursor_location
       toggle_player
+      self.cursor_location = next_move
     else
       board_view.draw_error(cursor_location, "you cant move there")
     end
     # reset cursor
   end
+
+  def next_move
+    next_move = board.status.keys.find_all { |location| board.status[location] == :open }
+    next_move[rand(next_move.count)]
+  end
+
 
   def toggle_player
     if current_player == :x
@@ -132,4 +140,4 @@ class TicTacToe < Processing::App
 
 end
 
-TicTacToe.new(:width => 800, :height => 800, :title => "Tic Tac Toe!")
+TicTacToe.new(:width => 801, :height => 800, :title => "Tic Tac Toe!")
