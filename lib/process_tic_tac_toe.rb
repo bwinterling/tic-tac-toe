@@ -20,6 +20,7 @@ class TicTacToe < Processing::App
   def draw
     board_view.render
     evaluate_board
+    mouse_grid
   end
 
   def default_cursor
@@ -58,8 +59,23 @@ class TicTacToe < Processing::App
     end
   end
 
-  def mouse_moved
+  def mouse_clicked
+    unless board.winner
+      process_move
+    else
+      board.winner = nil
+      board.status = board.default_status
+      self.cursor_location = default_cursor
+    end
+  end
 
+  def mouse_moved
+    mouse_location = []
+    mouse_grid.each do |key, hash|
+      if mouse_x < hash[:xmax] && mouse_x > hash[:xmin] && mouse_y < hash[:ymax] && mouse_y > hash[:ymin]
+        eval_next_move(key)
+      end
+    end  
   end
 
   def mouse_grid
@@ -70,12 +86,13 @@ class TicTacToe < Processing::App
     mouse_grid = {}
     board.status.keys.each do |key|
       mouse_grid[key] = {
-        "xmax" => (key[0] * board_view.offset) + board_view.border,
-        "xmin" => ((key[0] - 1) * board_view.offset) + board_view.border,
-        "ymax" => (key[1] * board_view.offset) + board_view.border,
-        "ymin" => ((key[1] - 1) * board_view.offset) + board_view.border
+        :xmax => (key[0] * board_view.offset) + board_view.border,
+        :xmin => ((key[0] - 1) * board_view.offset) + board_view.border,
+        :ymax => (key[1] * board_view.offset) + board_view.border,
+        :ymin => ((key[1] - 1) * board_view.offset) + board_view.border
       }
     end
+    mouse_grid
   end 
 
   def process_move
